@@ -65,6 +65,7 @@ export class Scraper {
 
             console.log(`Info: Scraped ${msgs.length} messages.`);
             msgs.map(m => allMessages.push(m));
+            console.log(`Info: Total scraped ${allMessages.length} messages.`);
             if(this.cacheEnabled) Saver.cache(allMessages, this.channelId);
 
             if (msgs.length < 100) {
