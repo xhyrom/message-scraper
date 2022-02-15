@@ -6,11 +6,13 @@ import { Saver } from './Saver';
 export class Scraper {
     token: string;
     channelId: string;
+    cacheEnabled: boolean;
     firstMessageId: string;
 
-    constructor(token: string, channelId: string, firstMessageId: string) {
+    constructor(token: string, channelId: string, firstMessageId: string, cacheEnabled: boolean) {
         this.token = token;
         this.channelId = channelId;
+        this.cacheEnabled = cacheEnabled;
         this.firstMessageId = firstMessageId;
 
         this.setup();
@@ -63,7 +65,7 @@ export class Scraper {
 
             console.log(`Info: Scraped ${msgs.length} messages.`);
             msgs.map(m => allMessages.push(m));
-            Saver.cache(allMessages, this.channelId);
+            if(this.cacheEnabled) Saver.cache(allMessages, this.channelId);
 
             if (msgs.length < 100) {
                 new Saver(this.channelId, allMessages.sort((a, b) => snowflakeToTimestamp(a.id) - snowflakeToTimestamp(b.id)));
