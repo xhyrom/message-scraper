@@ -3,13 +3,21 @@ import { AsyncQueue } from '@sapphire/async-queue';
 import { getIdentifiers } from '../utils/getIdentifiers';
 import { Saver } from './Saver';
 
+export enum FileType {
+    'Txt' = 1,
+    'Markdown' = 2,
+    'Html' = 3,
+}
+
 export class Scraper {
     token: string;
+    fileType: FileType;
     channelId: string;
     asyncQueue: AsyncQueue;
 
-    constructor(token: string, channelId: string) {
+    constructor(token: string, channelId: string, fileType: FileType) {
         this.token = token;
+        this.fileType = fileType;
         this.channelId = channelId;
 
         this.asyncQueue = new AsyncQueue();
@@ -57,7 +65,7 @@ export class Scraper {
     }
 
     private async scrapeMessages() {
-        const saver = new Saver(this.channelId);
+        const saver = new Saver(this.channelId, this.fileType);
         const { total, firstMessage } = await this.searchInChannel();
         let afterMsg = firstMessage.id;
         let scraped = 1;

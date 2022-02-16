@@ -11,5 +11,5 @@ export const timestampToTime = (ms) => {
     const mins = fullFill(date.getMinutes());
     const secs = fullFill(date.getSeconds());
     
-    return `${day}/${month}/${year} ${hours}:${mins}:${secs}`;
+    return `${day}/${month}/${year}, ${hours}:${mins}:${secs}`;
 }
