@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import { timestampToTime } from '../utils/timestampToTime';
 import { FileType } from './Scraper';
 import { JSDOM } from 'jsdom';
+import { textBreakLineSplit } from '../utils/textBreakLineSplit';
 
 const dom = new JSDOM();
 const document = dom.window.document;
@@ -31,6 +32,8 @@ export class Saver {
     public async addMessage(m: any): Promise<void> {
         if (m.sticker_items && m.sticker_items.length !== 0) m.content += ` ${m.sticker_items.map(s => `https://media.discordapp.net/stickers/${s.id}.webp?size=160`).join(' ')};`
         if (m.attachments && m.attachments.length !== 0) m.content += ` ${m.attachments.map(a => a.url).join(' ')}`;
+
+        await fs.appendFile(`output/channel_${this.channelId}/channel.txt`, `[${m.id} | ${timestampToTime(m.timestamp)}] (${m.id}) ${m.author.username}#${m.author.discriminator} -> ${m.content}  \n`).catch(e => e);
 
         if (this.fileType === FileType.Html) {
             const parentContainer = document.createElement("div");
@@ -70,8 +73,7 @@ export class Saver {
             }
             else {
                 const msgNode = document.createElement('span');
-                const textNode = document.createTextNode(m.content);
-                msgNode.append(textNode);
+                textBreakLineSplit(msgNode, document, m.content.replace(/\n/g, '<br>'));
                 messageContainer.appendChild(msgNode);
             }
 
@@ -145,5 +147,6 @@ export class Saver {
         }
 
         if (this.fileName !== 'channel.html') await fs.writeFile(this.path, write).catch(e => e);
+        else await fs.writeFile(`output/channel_${this.channelId}/channel.txt`, write).catch(e => e);
     }
 }
