@@ -4,7 +4,7 @@ export const timestampToTime = (ms) => {
     const date = new Date(ms);
     
     const day = fullFill(date.getDate());
-    const month = fullFill(date.getMonth());
+    const month = fullFill(date.getMonth() + 1);
     const year = fullFill(date.getFullYear(), 4);
     
     const hours = fullFill(date.getHours());

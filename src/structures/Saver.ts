@@ -48,11 +48,19 @@ export class Saver {
             const messageContainer = document.createElement('div');
             messageContainer.className = "message-container";
 
+            const mainSpan = document.createElement("span");
             const nameElement = document.createElement("span");
             const timestmapElement = document.createElement("span");
-            const name = document.createTextNode(`${m.author.username}#${m.author.discriminator} ${timestampToTime(m.timestamp)}`);
+            const name = document.createTextNode(`${m.author.username}#${m.author.discriminator}`);
+            const timestamp = document.createTextNode(timestampToTime(m.timestamp));
             nameElement.appendChild(name);
-            messageContainer.append(nameElement);
+            
+            timestmapElement.className = 'timestamp';
+            timestmapElement.appendChild(timestamp);
+
+            mainSpan.appendChild(nameElement);
+            mainSpan.appendChild(timestmapElement);
+            messageContainer.append(mainSpan);
 
             if(m.content.startsWith("```")) {
                 const codeNode = document.createElement("code");
