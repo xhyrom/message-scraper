@@ -1,19 +1,18 @@
 import hyttpo from 'hyttpo';
+import { AsyncQueue } from '@sapphire/async-queue';
 import { getIdentifiers } from '../utils/getIdentifiers';
-import { snowflakeToTimestamp } from '../utils/snowflakeToTimestamp';
 import { Saver } from './Saver';
 
 export class Scraper {
     token: string;
     channelId: string;
-    cacheEnabled: boolean;
-    firstMessageId: string;
+    asyncQueue: AsyncQueue;
 
-    constructor(token: string, channelId: string, firstMessageId: string, cacheEnabled: boolean) {
+    constructor(token: string, channelId: string) {
         this.token = token;
         this.channelId = channelId;
-        this.cacheEnabled = cacheEnabled;
-        this.firstMessageId = firstMessageId;
+
+        this.asyncQueue = new AsyncQueue();
 
         this.setup();
     }
@@ -46,9 +45,31 @@ export class Scraper {
         if (!valid.ok) return console.log('Error: Invalid channel!');
     }
 
+    private async searchInChannel() {
+        const { data } = await hyttpo.get(`https://discord.com/api/v9/channels/${this.channelId}/messages/search?sort_by=timestamp&sort_order=asc&offset=0`, {
+            headers: {
+                ...getIdentifiers(),
+                'Authorization': this.token
+            }
+        }).catch(e => e);
+
+        return{ total: data.total_results, firstMessage: data.messages[0]?.[0] };
+    }
+
     private async scrapeMessages() {
-        let allMessages = [];
-        let afterMsg = this.firstMessageId;
+        const saver = new Saver(this.channelId);
+        const { total, firstMessage } = await this.searchInChannel();
+        let afterMsg = firstMessage.id;
+        let scraped = 1;
+
+        (async() => {
+            await this.asyncQueue.wait();
+            try {
+                await saver.addMessage(firstMessage);
+            } finally {
+                await this.asyncQueue.shift();
+            }
+        })();
 
         while(true) {
             const messages = await hyttpo.get(`https://discord.com/api/v9/channels/${this.channelId}/messages?limit=100${afterMsg.length > 0 ? `&after=${afterMsg}` : ""}`, {
@@ -62,16 +83,21 @@ export class Scraper {
             if (msgs.length === 0) continue;
 
             afterMsg = msgs[0].id;
+            scraped += msgs.length;
 
-            console.log(`Info: Scraped ${msgs.length} messages.`);
-            msgs.map(m => allMessages.push(m));
-            console.log(`Info: Total scraped ${allMessages.length} messages.`);
-            if(this.cacheEnabled) Saver.cache(allMessages, this.channelId);
+            console.log(`Info: Scraped ${msgs.length} messages. Remaining: ${total - scraped}`);
+
+            for (const m of msgs.reverse()) {
+                await this.asyncQueue.wait();
+                try {
+                    await saver.addMessage(m);
+                } finally {
+                    await this.asyncQueue.shift()
+                }
+            }
 
             if (msgs.length < 100) {
-                new Saver(this.channelId, allMessages.sort((a, b) => snowflakeToTimestamp(a.id) - snowflakeToTimestamp(b.id)));
-
-                console.log(`Info: Getted ${allMessages.length} messages.`);
+                console.log(`Info: Tottaly scraped ${scraped} messages.`);
                 break;
             }
         }

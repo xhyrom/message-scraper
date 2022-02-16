@@ -12,18 +12,6 @@ export const questions = (): Array<PromptObject> => {
             type: 'text',
             name: 'channelId',
             message: 'Enter a channel id.'
-        },
-        {
-            type: 'text',
-            name: 'firstMessageId',
-            message: 'Enter a first message id.'
-        },
-        {
-            type: 'toggle',
-            name: 'cacheEnabled',
-            message: 'Select, if you want caching.',
-            active: 'yes',
-            inactive: 'no'
         }
     ]
 }
@@ -31,7 +19,7 @@ export const questions = (): Array<PromptObject> => {
 (async() => {
     const response = await prompts(questions());
 
-    if (!response.token || !response.channelId || !response.firstMessageId) return process.exit(1);
+    if (!response.token || !response.channelId) return process.exit(1);
 
-    new Scraper(response.token, response.channelId, response.firstMessageId, response.cacheEnabled);
+    new Scraper(response.token, response.channelId);
 })();
