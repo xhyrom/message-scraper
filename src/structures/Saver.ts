@@ -29,7 +29,7 @@ export class Saver {
     }
 
     public async addMessage(m: any): Promise<void> {
-        if (m.stickers && m.stickers.length !== 0) m.content += ` ${m.sticker_items.map(s => `https://media.discordapp.net/stickers/${s.id}.webp?size=160`).join(' ')};`
+        if (m.sticker_items && m.sticker_items.length !== 0) m.content += ` ${m.sticker_items.map(s => `https://media.discordapp.net/stickers/${s.id}.webp?size=160`).join(' ')};`
         if (m.attachments && m.attachments.length !== 0) m.content += ` ${m.attachments.map(a => a.url).join(' ')}`;
 
         if (this.fileType === FileType.Html) {
@@ -73,6 +73,48 @@ export class Saver {
                 const textNode = document.createTextNode(m.content);
                 msgNode.append(textNode);
                 messageContainer.appendChild(msgNode);
+            }
+
+            if (m.attachments && m.attachments.length !== 0) {
+                for (const attachment of m.attachments) {
+                    const attachmentDiv = document.createElement('div');
+                    attachmentDiv.className = 'attachment image';
+
+                    const att = document.createElement('a');
+                    att.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                    att.tabIndex = 0;
+                    att.target = '_blank';
+
+                    const image = document.createElement('img');
+                    image.src = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                    image.className = 'attachment-image-size';
+
+                    att.appendChild(image);
+
+                    attachmentDiv.appendChild(att);
+                    messageContainer.appendChild(attachmentDiv);
+                }
+            }
+
+            if (m.sticker_items && m.sticker_items.length !== 0) {
+                for (const sticker of m.sticker_items) {
+                    const attachmentDiv = document.createElement('div');
+                    attachmentDiv.className = 'attachment image';
+
+                    const att = document.createElement('a');
+                    att.href = `https://media.discordapp.net/stickers/${sticker.id}.webp?size=160`;
+                    att.tabIndex = 0;
+                    att.target = '_blank';
+
+                    const image = document.createElement('img');
+                    image.src = `https://media.discordapp.net/stickers/${sticker.id}.webp?size=160`;
+                    image.className = 'attachment-image-size';
+
+                    att.appendChild(image);
+
+                    attachmentDiv.appendChild(att);
+                    messageContainer.appendChild(attachmentDiv);
+                }
             }
 
             parentContainer.appendChild(messageContainer);
