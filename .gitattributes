@@ -1,1 +1,1 @@
-src/templates/template.html linguist-vendored=false
+*.html linguist-detectable=false
