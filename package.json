@@ -29,7 +29,6 @@
     "@types/marked": "^4.0.2",
     "highlight.js": "^11.4.0",
     "hyttpo": "^0.3.6",
-    "is-img": "^0.1.0",
     "jsdom": "^19.0.0",
     "marked": "^4.0.12",
     "prompts": "^2.4.2"
