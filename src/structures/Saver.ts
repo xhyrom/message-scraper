@@ -80,21 +80,22 @@ export class Saver {
                 for (const attachment of m.attachments) {
                     const attachmentDiv = document.createElement('div');
 
-                    if (attachment.content_type.includes('image')) {
+                    if (attachment.content_type?.includes('image')) {
                         attachmentDiv.className = 'attachment image';
 
-                        const att = document.createElement('a');
-                        att.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
-                        att.tabIndex = 0;
-                        att.target = '_blank';
+                        const a = document.createElement('a');
+                        a.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                        a.tabIndex = 0;
+                        a.target = '_blank';
 
                         const image = document.createElement('img');
                         image.src = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
-                        image.className = 'attachment-image-size';
+                        image.width = attachment.width > 400 ? 400 : attachment.width;
+                        image.height = attachment.height > 300 ? 300 : attachment.height;
     
-                        att.appendChild(image);
-                        attachmentDiv.appendChild(att);
-                    } else {
+                        a.appendChild(image);
+                        attachmentDiv.appendChild(a);
+                    } else if (attachment.content_type) {
                         attachmentDiv.className = 'attachment video';
 
                         const video = document.createElement('video');
@@ -104,6 +105,27 @@ export class Saver {
                         video.playsInline = true;
     
                         attachmentDiv.appendChild(video);
+                    } else {
+                        attachmentDiv.className = 'attachment invalid';
+
+                        const inner = document.createElement('div');
+                        inner.className = 'inner';
+
+                        const a = document.createElement('a');
+                        a.className = 'name';
+                        a.textContent = attachment.filename;
+                        a.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                        a.tabIndex = 0;
+                        a.target = '_blank';
+
+                        const size = document.createElement('span');
+                        size.className = 'size';
+                        size.textContent = attachment.size;
+
+                        inner.append(a);
+                        inner.append(size);
+    
+                        attachmentDiv.appendChild(inner);
                     }
 
                     messageContainer.appendChild(attachmentDiv);

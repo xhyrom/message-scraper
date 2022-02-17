@@ -93,7 +93,7 @@ export class Scraper {
             afterMsg = msgs[0].id;
             scraped += msgs.length;
 
-            console.log(`Info: Scraped ${msgs.length} messages. Remaining: ${total - scraped}`);
+            console.log(`Info: Scraped ${msgs.length} messages (${Math.floor((scraped * 100) / total)}%). Remaining: ${total - scraped}`);
 
             for (const m of msgs.reverse()) {
                 await this.asyncQueue.wait();
