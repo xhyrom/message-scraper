@@ -2,10 +2,18 @@ import fs from 'node:fs/promises';
 import { timestampToTime } from '../utils/timestampToTime';
 import { FileType } from './Scraper';
 import { JSDOM } from 'jsdom';
-import { textBreakLineSplit } from '../utils/textBreakLineSplit';
+import { replaceBeforeMarkdown, replaceAfterMarkdown } from '../utils/replaceMarkdown';
+import higlightjs from 'highlight.js';
+import { marked } from 'marked';
 
 const dom = new JSDOM();
 const document = dom.window.document;
+
+marked.setOptions({
+    highlight: (code) => {
+      return higlightjs.highlightAuto(code).value;
+    }
+});
 
 export type FileName = 'channel.txt' | 'channel.md' | 'channel.html';
 
@@ -30,20 +38,18 @@ export class Saver {
     }
 
     public async addMessage(m: any): Promise<void> {
-        if (m.sticker_items && m.sticker_items.length !== 0) m.content += ` ${m.sticker_items.map(s => `https://media.discordapp.net/stickers/${s.id}.webp?size=160`).join(' ')};`
-        if (m.attachments && m.attachments.length !== 0) m.content += ` ${m.attachments.map(a => a.url).join(' ')}`;
-
-        await fs.appendFile(`output/channel_${this.channelId}/channel.txt`, `[${m.id} | ${timestampToTime(m.timestamp)}] (${m.id}) ${m.author.username}#${m.author.discriminator} -> ${m.content}  \n`).catch(e => e);
-
         if (this.fileType === FileType.Html) {
             const parentContainer = document.createElement("div");
             parentContainer.className = "parent-container";
 
             const avatarDiv = document.createElement("div");
             avatarDiv.className = "avatar-container";
+
+            const avatar = m.author.avatar ? `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.webp` : `https://cdn.discordapp.com/embed/avatars/${m.author.discriminator % 5}.png`
             const img = document.createElement('img');
-            img.setAttribute('src', `https://cdn.discordapp.com/avatars/${m.author.id}/${m.author.avatar}.webp`);
+            img.setAttribute('src', avatar);
             img.className = "avatar";
+
             avatarDiv.appendChild(img);
 
             parentContainer.appendChild(avatarDiv);
@@ -65,35 +71,41 @@ export class Saver {
             mainSpan.appendChild(timestmapElement);
             messageContainer.append(mainSpan);
 
-            if(m.content.startsWith("```")) {
-                const codeNode = document.createElement("code");
-                const textNode =  document.createTextNode(m.content.replace(/```/g, ""));
-                codeNode.appendChild(textNode);
-                messageContainer.appendChild(codeNode);
-            }
-            else {
-                const msgNode = document.createElement('span');
-                textBreakLineSplit(msgNode, document, m.content.replace(/\n/g, '<br>'));
-                messageContainer.appendChild(msgNode);
-            }
+            const msgNode = document.createElement('span');
+            msgNode.className = 'msg';
+            msgNode.innerHTML = replaceAfterMarkdown(marked(replaceBeforeMarkdown(m.content)));
+            messageContainer.appendChild(msgNode);
 
             if (m.attachments && m.attachments.length !== 0) {
                 for (const attachment of m.attachments) {
                     const attachmentDiv = document.createElement('div');
-                    attachmentDiv.className = 'attachment image';
 
-                    const att = document.createElement('a');
-                    att.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
-                    att.tabIndex = 0;
-                    att.target = '_blank';
+                    if (attachment.content_type.includes('image')) {
+                        attachmentDiv.className = 'attachment image';
 
-                    const image = document.createElement('img');
-                    image.src = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
-                    image.className = 'attachment-image-size';
+                        const att = document.createElement('a');
+                        att.href = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                        att.tabIndex = 0;
+                        att.target = '_blank';
 
-                    att.appendChild(image);
+                        const image = document.createElement('img');
+                        image.src = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                        image.className = 'attachment-image-size';
+    
+                        att.appendChild(image);
+                        attachmentDiv.appendChild(att);
+                    } else {
+                        attachmentDiv.className = 'attachment video';
 
-                    attachmentDiv.appendChild(att);
+                        const video = document.createElement('video');
+                        video.src = `https://media.discordapp.net/attachments/${this.channelId}/${attachment.id}/${attachment.filename}`;
+                        video.className = 'video-player';
+                        video.controls = true;
+                        video.playsInline = true;
+    
+                        attachmentDiv.appendChild(video);
+                    }
+
                     messageContainer.appendChild(attachmentDiv);
                 }
             }
@@ -122,8 +134,14 @@ export class Saver {
             parentContainer.appendChild(messageContainer);
 
             await fs.appendFile(this.path, parentContainer.outerHTML).catch(err => console.log(err));
-        } else await fs.appendFile(this.path, `[${m.id} | ${timestampToTime(m.timestamp)}] (${m.id}) ${m.author.username}#${m.author.discriminator} -> ${m.content}  \n`).catch(e => e);
-    
+        }
+
+        if (m.sticker_items && m.sticker_items.length !== 0) m.content += ` ${m.sticker_items.map(s => `https://media.discordapp.net/stickers/${s.id}.webp?size=160`).join(' ')};`
+        if (m.attachments && m.attachments.length !== 0) m.content += ` ${m.attachments.map(a => a.url).join(' ')}`;
+
+        await fs.appendFile(`output/channel_${this.channelId}/channel.txt`, `[${m.id} | ${timestampToTime(m.timestamp)}] (${m.id}) ${m.author.username}#${m.author.discriminator} -> ${m.content}  \n`).catch(e => e);
+        if (this.fileType === FileType.Markdown) await fs.appendFile(this.path, `[${m.id} | ${timestampToTime(m.timestamp)}] (${m.id}) ${m.author.username}#${m.author.discriminator} -> ${m.content}  \n`).catch(e => e);
+
         return;
     }
 
