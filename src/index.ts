@@ -28,6 +28,11 @@ export const questions = (): Array<PromptObject> => {
                     title: 'Html File', value: 3
                 }
             ]
+        },
+        {
+            type: 'text',
+            name: 'afterMessageId',
+            message: 'Enter the id of the message after which messages will be scraped (optional).'
         }
     ]
 }
@@ -37,5 +42,5 @@ export const questions = (): Array<PromptObject> => {
 
     if (!response.token || !response.channelId || !response.fileType) return process.exit(1);
 
-    new Scraper(response.token, response.channelId, response.fileType as FileType);
+    new Scraper(response.token, response.channelId, response.fileType as FileType, response.afterMessageId);
 })();

@@ -13,12 +13,14 @@ export class Scraper {
     token: string;
     fileType: FileType;
     channelId: string;
+    afterMessageId: string;
     asyncQueue: AsyncQueue;
 
-    constructor(token: string, channelId: string, fileType: FileType) {
+    constructor(token: string, channelId: string, fileType: FileType, afterMessageId?: string) {
         this.token = token;
         this.fileType = fileType;
         this.channelId = channelId;
+        this.afterMessageId = afterMessageId;
 
         this.asyncQueue = new AsyncQueue();
 
@@ -67,7 +69,7 @@ export class Scraper {
     private async scrapeMessages() {
         const saver = new Saver(this.channelId, this.fileType);
         const { total, firstMessage } = await this.searchInChannel();
-        let afterMsg = firstMessage.id;
+        let afterMsg = this.afterMessageId || firstMessage.id;
         let scraped = 1;
 
         (async() => {
@@ -80,7 +82,7 @@ export class Scraper {
         })();
 
         while(true) {
-            const messages = await hyttpo.get(`https://discord.com/api/v9/channels/${this.channelId}/messages?limit=100${afterMsg.length > 0 ? `&after=${afterMsg}` : ""}`, {
+            const messages = await hyttpo.get(`https://discord.com/api/v9/channels/${this.channelId}/messages?limit=100&after=${afterMsg}`, {
                 headers: {
                     ...getIdentifiers(),
                     'Authorization': this.token
