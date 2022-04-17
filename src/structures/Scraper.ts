@@ -2,6 +2,7 @@ import hyttpo from 'hyttpo';
 import { AsyncQueue } from '@sapphire/async-queue';
 import { getIdentifiers } from '../utils/getIdentifiers';
 import { Saver } from './Saver';
+import { formatTime } from '../utils/formatTime';
 
 export enum FileType {
     'Txt' = 1,
@@ -63,7 +64,7 @@ export class Scraper {
             }
         }).catch(e => e);
 
-        return{ total: data.total_results, firstMessage: data.messages[0]?.[0] };
+        return{ total: data.total_results, firstMessage: data.messages?.[0]?.[0] };
     }
 
     private async scrapeMessages() {
@@ -80,6 +81,8 @@ export class Scraper {
                 await this.asyncQueue.shift();
             }
         })();
+
+        console.log(`ETA: ${formatTime(((total - 1) / 100))}`);
 
         while(true) {
             const messages = await hyttpo.get(`https://discord.com/api/v9/channels/${this.channelId}/messages?limit=100&after=${afterMsg}`, {

@@ -10,6 +10,16 @@
     "copy": "copyfiles --error --up 1 src/templates/*.* dist"
   },
   "keywords": [],
+  "contributors": [
+    {
+      "name": "xHyroM",
+      "url": "https://github.com/xHyroM/"
+    },
+    {
+      "name": "Gabe616",
+      "url": "https://github.com/Gabe616/"
+    }
+  ],
   "author": "xHyroM",
   "license": "MIT",
   "devDependencies": {
