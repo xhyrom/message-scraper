@@ -63,9 +63,13 @@ export class Scraper {
 	}
 
 	private async searchInChannel() {
+		let url = `https://discord.com/api/v9/guilds/${this.guildId}/messages/search?channel_id=${this.channelId}&sort_by=timestamp&sort_order=asc&offset=0`;
+		if (!this.guildId || this.guildId === "@me") {
+			url = `https://discord.com/api/v9/channels/${this.channelId}/messages/search?sort_by=timestamp&sort_order=asc&offset=0`
+		}
 		const { data } = await hyttpo
 			.get(
-				`https://discord.com/api/v9/guilds/${this.guildId}/messages/search?channel_id=${this.channelId}&sort_by=timestamp&sort_order=asc&offset=0`,
+				url,
 				{
 					headers: {
 						...getIdentifiers(),
